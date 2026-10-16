@@ -1,4 +1,5 @@
-# 💰 Personal Finance Tracker (نظام تتبع المالية الشخصية)
+#  MALI 
+💰 Personal Finance Tracker (نظام تتبع المالية الشخصية)
 
 A comprehensive personal finance management web application built with **React**, **Express.js**, and **MongoDB**. The platform allows users to log income, track daily expenses, manage bank accounts and cash wallets, and keep track of debts with automated insights.
 
