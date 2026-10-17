@@ -12,21 +12,25 @@ const authRoutes = require("./routes/auth");
 const incomeRoutes = require("./routes/income");
 const expenseRoutes = require("./routes/expenses");
 const expenseCategoryRoutes = require("./routes/expenseCategories");
-const accountRoutes         = require("./routes/accounts");
+const accountRoutes = require("./routes/accounts");
 const transactionRoutes = require("./routes/transactions");
-const debtRoutes      = require("./routes/debts");
-const reportRoutes    = require("./routes/reports");
-const dashboardRoutes  = require("./routes/dashboard");
-const settingsRoutes   = require("./routes/settings");
-const savingsRoutes    = require("./routes/savings");
-const adminRoutes      = require("./routes/admin");
-const chatRoutes       = require("./routes/chat");
+const debtRoutes = require("./routes/debts");
+const reportRoutes = require("./routes/reports");
+const dashboardRoutes = require("./routes/dashboard");
+const settingsRoutes = require("./routes/settings");
+const savingsRoutes = require("./routes/savings");
+const adminRoutes = require("./routes/admin");
+const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notifications");
 const userExtrasRoutes = require("./routes/userExtras");
 
-const missingSecrets = ["JWT_SECRET", "JWT_ADMIN_SECRET"].filter((name) => !process.env[name]);
+const missingSecrets = ["JWT_SECRET", "JWT_ADMIN_SECRET"].filter(
+  (name) => !process.env[name],
+);
 if (missingSecrets.length) {
-  console.error("Missing required environment variables: " + missingSecrets.join(", "));
+  console.error(
+    "Missing required environment variables: " + missingSecrets.join(", "),
+  );
   process.exit(1);
 }
 if (process.env.JWT_ADMIN_SECRET === process.env.JWT_SECRET) {
@@ -48,18 +52,23 @@ if (isProduction && allowedOrigins.size === 0) {
   console.error("CLIENT_URL must be configured in production.");
   process.exit(1);
 }
-app.use(cors({
-  credentials: true,
-  origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl, Postman).
-    if (!origin) return cb(null, true);
-    if (allowedOrigins.has(origin)) return cb(null, true);
-    if (!isProduction && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-      return cb(null, true);
-    }
-    cb(new Error("CORS: origin not allowed"));
-  },
-}));
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, cb) => {
+      // Allow requests with no origin (mobile apps, curl, Postman).
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.has(origin)) return cb(null, true);
+      if (
+        !isProduction &&
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return cb(null, true);
+      }
+      cb(new Error("CORS: origin not allowed"));
+    },
+  }),
+);
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 
@@ -73,18 +82,20 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/debts", debtRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/settings",  settingsRoutes);
-app.use("/api/savings",   savingsRoutes);
-app.use("/api/admin",     adminRoutes);
-app.use("/api/chat",      chatRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/savings", savingsRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api",           userExtrasRoutes);
+app.use("/api", userExtrasRoutes);
 
 // Health check
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 
 // 404
-app.use((_, res) => res.status(404).json({ success: false, message: "Route not found" }));
+app.use((_, res) =>
+  res.status(404).json({ success: false, message: "Route not found" }),
+);
 
 // Error handler
 app.use(errorHandler);
@@ -101,3 +112,6 @@ connectDB()
     console.error("DB connection failed:", err.message);
     process.exit(1);
   });
+
+// Export app for Vercel Serverless Function
+module.exports = app;
