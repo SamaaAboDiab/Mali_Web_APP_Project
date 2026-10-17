@@ -45,7 +45,8 @@ const defaultClientUrl = isProduction ? "" : "http://localhost:5174";
 const allowedOrigins = new Set(
   (process.env.CLIENT_URL ?? defaultClientUrl)
     .split(",")
-    .map((origin) => origin.trim())
+    // Browsers send the origin without a trailing slash, so "https://x.app/" must still match.
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
     .filter(Boolean),
 );
 if (isProduction && allowedOrigins.size === 0) {
