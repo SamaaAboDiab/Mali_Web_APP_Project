@@ -6,8 +6,10 @@ import {
   ChevronRight,
   Ban,
   ChartNoAxesColumn,
+  CircleCheck,
   Clock3,
   History,
+  Mail,
   MessagesSquare,
   PieChart as PieChartIcon,
   TrendingDown,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fetchAdminDashboard, fetchAdminStats } from "../../api/adminAuthApi";
+import { sendExpiryReminders } from "../../api/adminExtrasApi";
 import { formatMoney, formatPercent } from "../../utils/formatAmount";
 import { toIntlLocale } from "../../i18n/locale";
 import Money from "../../components/common/Money";
@@ -454,9 +457,52 @@ function RevenueCard({ revenue, loading, error, t, language }) {
 }
 
 /* ── subscriptions ending soon ── */
+const REMINDER_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 function ExpiringUsersList({ users, total, loading, error, t, language }) {
   const numberFormat = new Intl.NumberFormat(toIntlLocale(language));
   const dateFormat = new Intl.DateTimeFormat(toIntlLocale(language), { month: "short", day: "numeric" });
+  const timeFormat = new Intl.DateTimeFormat(toIntlLocale(language), { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  // Reminders sent from this page, so buttons update before the next dashboard refresh.
+  const [sentAt, setSentAt] = useState({});
+  // "all" or a user id while that request is running.
+  const [sending, setSending] = useState(null);
+  const [result, setResult] = useState(null);
+  // Reference time for the 24h cooldown; refreshed after each send.
+  const [now, setNow] = useState(() => Date.now());
+
+  const lastReminder = (user) => sentAt[user._id] ?? user.lastReminderAt;
+  const recentlyReminded = (user) => {
+    const at = lastReminder(user);
+    return Boolean(at) && now - new Date(at).getTime() < REMINDER_COOLDOWN_MS;
+  };
+
+  const remind = async (userId) => {
+    setSending(userId ?? "all");
+    setResult(null);
+    try {
+      const { data } = await sendExpiryReminders(userId ? [userId] : undefined);
+      const { sent, skipped, failed, sentIds, sentAt: at } = data.data;
+      setNow(Date.now());
+      setSentAt((prev) => ({ ...prev, ...Object.fromEntries(sentIds.map((id) => [id, at])) }));
+      const parts = sent > 0 ? [t("admin.home.reminderResult", { sent: numberFormat.format(sent) })] : [];
+      if (skipped > 0) parts.push(sent > 0 ? t("admin.home.reminderSkipped", { count: numberFormat.format(skipped) }) : t("admin.home.reminderNone"));
+      if (failed > 0) parts.push(t("admin.home.reminderFailed", { count: numberFormat.format(failed) }));
+      setResult({ tone: failed > 0 ? "warning" : "success", text: parts.join(" ") });
+    } catch {
+      setResult({ tone: "error", text: t("admin.home.reminderError") });
+    } finally {
+      setSending(null);
+    }
+  };
+
+  const resultClass = {
+    success: "bg-emerald-50 text-emerald-700",
+    warning: "bg-amber-50 text-amber-800",
+    error: "bg-red-50 text-red-700",
+  };
+  // The list holds the nearest 50; if more are expiring, some may still need a reminder.
+  const remindAllDisabled = sending !== null || (users.length >= total && users.every(recentlyReminded));
 
   return (
     <section aria-labelledby="admin-expiring-users-title" className={cardClass}>
@@ -466,12 +512,29 @@ function ExpiringUsersList({ users, total, loading, error, t, language }) {
         subtitle={t("admin.home.expiringUsersSubtitle")}
         action={
           total > 0 && (
-            <Link to="/admin/users?status=expiring" className={viewAllClass}>
-              {t("admin.home.viewAll")}
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => remind()}
+                disabled={remindAllDisabled}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Mail size={14} aria-hidden="true" />
+                {sending === "all" ? t("admin.home.reminding") : t("admin.home.remindAll")}
+              </button>
+              <Link to="/admin/users?status=expiring" className={viewAllClass}>
+                {t("admin.home.viewAll")}
+              </Link>
+            </div>
           )
         }
       />
+
+      {result && (
+        <p role="status" className={`mt-4 rounded-xl px-3 py-2 text-xs font-medium ${resultClass[result.tone]}`}>
+          {result.text}
+        </p>
+      )}
 
       {error ? (
         <ErrorBox>{error}</ErrorBox>
@@ -484,11 +547,13 @@ function ExpiringUsersList({ users, total, loading, error, t, language }) {
         <p className="mt-5 rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">{t("admin.home.noExpiringUsers")}</p>
       ) : (
         <ul className="mt-4 space-y-1">
-          {users.slice(0, 5).map((user) => (
-            <li key={user._id}>
+          {users.slice(0, 5).map((user) => {
+            const reminded = recentlyReminded(user);
+            return (
+            <li key={user._id} className="flex items-center gap-2">
               <Link
                 to={`/admin/users?search=${encodeURIComponent(user.email)}&status=expiring`}
-                className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-amber-50/60"
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-amber-50/60"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
                   {(user.name || user.email || "?").trim()[0]?.toUpperCase()}
@@ -505,8 +570,20 @@ function ExpiringUsersList({ users, total, loading, error, t, language }) {
                   {t("admin.home.daysRemaining", { days: numberFormat.format(user.daysLeft) })}
                 </span>
               </Link>
+              <button
+                type="button"
+                onClick={() => remind(user._id)}
+                disabled={sending !== null || reminded}
+                aria-label={t("admin.home.remindUser", { name: user.name || user.email })}
+                title={reminded ? t("admin.home.remindedAt", { time: timeFormat.format(new Date(lastReminder(user))) }) : undefined}
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-slate-200 disabled:hover:text-slate-600"
+              >
+                {reminded ? <CircleCheck size={13} aria-hidden="true" className="text-emerald-600" /> : <Mail size={13} aria-hidden="true" />}
+                {sending === user._id ? t("admin.home.reminding") : reminded ? t("admin.home.reminded") : t("admin.home.remind")}
+              </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>

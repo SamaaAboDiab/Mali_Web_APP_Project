@@ -19,6 +19,10 @@ export const fetchRenewals = (params) => adminClient.get("/admin/renewals", { pa
 export const approveRenewal = (id, response) => adminClient.post(`/admin/renewals/${id}/approve`, { response });
 export const rejectRenewal = (id, response) => adminClient.post(`/admin/renewals/${id}/reject`, { response });
 
+// Expiry reminder emails (no ids = every expiring user)
+export const sendExpiryReminders = (userIds) =>
+  adminClient.post("/admin/reminders/expiring", userIds ? { userIds } : {});
+
 // Revenue report
 export const fetchRevenueReport = () => adminClient.get("/admin/revenue-report");
 

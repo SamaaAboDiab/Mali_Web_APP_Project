@@ -6,7 +6,7 @@ const adminLogSchema = new Schema({
   user:    { type: Schema.Types.ObjectId, ref: "User", required: true },
   action:  {
     type: String,
-    enum: ["create_user","extend_subscription","change_plan","add_free_days","suspend","activate","manual_date"],
+    enum: ["create_user","extend_subscription","change_plan","add_free_days","suspend","activate","manual_date","send_reminder"],
     required: true,
   },
   details: { type: Schema.Types.Mixed },

@@ -15,6 +15,8 @@ const userSchema = new mongoose.Schema(
     subscriptionStart: { type: Date, default: Date.now },
     subscriptionEnd:   { type: Date },
     isSuspended:       { type: Boolean, default: false },
+    // Last expiry reminder email the admin sent (one per 24h at most).
+    lastReminderAt:    { type: Date, default: null },
 
     /* notifications: "read all" mark + ids read one by one since then */
     notificationsSeenAt: { type: Date, default: null },

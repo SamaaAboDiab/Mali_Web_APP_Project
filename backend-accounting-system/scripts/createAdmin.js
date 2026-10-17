@@ -9,11 +9,15 @@
  * The password is hashed (bcrypt) by the Admin model's pre-save hook.
  */
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
+const dns      = require("dns");
 const mongoose = require("mongoose");
-const Admin    = require("../src/models/Admin");
+const Admin   = require("../src/models/Admin");
 const { getPasswordPolicyError } = require("../src/utils/passwordPolicy");
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Some ISP DNS servers refuse SRV lookups (querySrv EREFUSED) needed by mongodb+srv://
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
+const EMAIL_RE =/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function fail(message) {
   console.error("❌", message);

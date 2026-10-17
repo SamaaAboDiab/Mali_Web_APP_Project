@@ -53,6 +53,9 @@ router.put("/payment-settings",          extras.updatePaymentSettings);
 /* revenue report */
 router.get("/revenue-report",            extras.getRevenueReport);
 
+/* expiry reminder emails */
+router.post("/reminders/expiring",       extras.sendExpiryReminders);
+
 /* notifications for the bell */
 router.get("/notifications",       notifications.getAdminNotifications);
 router.post("/notifications/read",     notifications.markAdminNotificationRead);

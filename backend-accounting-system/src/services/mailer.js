@@ -113,4 +113,40 @@ async function sendSubscriptionUpdateEmail(toEmail, name, planLabel, subscriptio
   });
 }
 
-module.exports = { sendPasswordResetEmail, sendEmailVerificationCode, sendSubscriptionUpdateEmail };
+async function sendSubscriptionReminderEmail(toEmail, name, planLabel, subscriptionEnd, daysLeft) {
+  const endStr = new Date(subscriptionEnd).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+  const renewUrl = `${CLIENT_URL}/profile?tab=subscription`;
+  await transporter.sendMail({
+    from: `"Money Tracker" <${SMTP_FROM}>`,
+    to: toEmail,
+    subject: `اشتراكك في Money Tracker هينتهي خلال ${daysLeft} يوم`,
+    html: `
+      <div dir="rtl" style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
+          <div style="background:#0d9488;border-radius:8px;padding:8px;">
+            <span style="color:white;font-weight:bold;font-size:14px;">MT</span>
+          </div>
+          <span style="font-weight:600;font-size:16px;color:#111827;">Money Tracker</span>
+        </div>
+        <h2 style="color:#111827;font-size:22px;font-weight:700;margin:0 0 8px;">اشتراكك قرب يخلص ⏳</h2>
+        <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 20px;">
+          مرحباً ${name}، فاضل <strong>${daysLeft} يوم</strong> على انتهاء اشتراكك. جدّد دلوقتي عشان تفضل متابع فلوسك من غير انقطاع.
+        </p>
+        <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;">
+          <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">الباقة الحالية</p>
+          <p style="margin:0 0 16px;font-size:16px;font-weight:700;color:#111827;">${planLabel}</p>
+          <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">تاريخ الانتهاء</p>
+          <p style="margin:0;font-size:16px;font-weight:700;color:#d97706;">${endStr}</p>
+        </div>
+        <a href="${renewUrl}"
+          style="display:inline-block;background:#0d9488;color:white;text-decoration:none;
+                 padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;margin-bottom:24px;">
+          جدّد اشتراكك
+        </a>
+        <p style="color:#9ca3af;font-size:12px;margin:0;">لو جددت بالفعل، تجاهل الرسالة دي.</p>
+      </div>
+    `,
+  });
+}
+
+module.exports = { sendPasswordResetEmail, sendEmailVerificationCode, sendSubscriptionUpdateEmail, sendSubscriptionReminderEmail };

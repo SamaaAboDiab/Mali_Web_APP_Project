@@ -13,7 +13,8 @@ const Expense = require("../models/Expense");
 const Debt = require("../models/Debt");
 const SavingsGoal = require("../models/SavingsGoal");
 const { PAID_PLAN_KEYS, pricesFrom, getPlanPrices, SUBSCRIPTION_CURRENCY } = require("../config/subscriptionPlans");
-const { calcEnd, userStatus, DAY } = require("../utils/subscription");
+const { calcEnd, userStatus, planLabel, DAY } = require("../utils/subscription");
+const { sendSubscriptionReminderEmail } = require("../services/mailer");
 
 const AUDIENCES = ["all", "active", "expiring", "expired", "trial", "paid"];
 const PAID_PLANS = ["3months", "6months", "yearly"];
@@ -393,6 +394,64 @@ exports.getRevenueReport = async (req, res, next) => {
           total: pendingRenewals.reduce((sum, request) => sum + (request.payment?.amount ?? prices[request.plan] ?? 0), 0),
         },
       },
+    });
+  } catch (err) { next(err); }
+};
+
+/* ── 8. Expiry reminder emails ───────────────────── */
+
+const REMINDER_COOLDOWN = DAY;
+const MAX_REMINDERS = 100;
+const REMINDER_BATCH = 5; // emails sent at the same time
+
+// Emails users whose subscription ends within 7 days. Body `userIds` picks some of them;
+// without it every expiring user is reminded. Anyone reminded in the last 24h is skipped.
+exports.sendExpiryReminders = async (req, res, next) => {
+  try {
+    const { userIds } = req.body ?? {};
+    const query = audienceQuery("expiring");
+    if (userIds !== undefined) {
+      if (!Array.isArray(userIds) || userIds.length === 0 || userIds.length > MAX_REMINDERS
+          || !userIds.every((id) => mongoose.isValidObjectId(id))) {
+        return bad(res, "userIds must be a non-empty list of user ids.");
+      }
+      query._id = { $in: userIds };
+    }
+
+    const now = new Date();
+    const users = await User.find(query)
+      .select("name email subscriptionType subscriptionEnd lastReminderAt")
+      .sort({ subscriptionEnd: 1 })
+      .limit(MAX_REMINDERS)
+      .lean();
+    const due = users.filter((u) => !u.lastReminderAt || now - new Date(u.lastReminderAt) >= REMINDER_COOLDOWN);
+
+    const sentIds = [];
+    let failed = 0;
+    for (let i = 0; i < due.length; i += REMINDER_BATCH) {
+      await Promise.all(due.slice(i, i + REMINDER_BATCH).map(async (user) => {
+        const daysLeft = Math.max(1, Math.ceil((new Date(user.subscriptionEnd) - now) / DAY));
+        try {
+          await sendSubscriptionReminderEmail(user.email, user.name, planLabel(user.subscriptionType), user.subscriptionEnd, daysLeft);
+          sentIds.push(user._id);
+        } catch (err) {
+          failed += 1;
+          console.error(`Reminder email to ${user.email} failed:`, err.message);
+        }
+      }));
+    }
+
+    if (sentIds.length) {
+      await User.updateMany({ _id: { $in: sentIds } }, { $set: { lastReminderAt: now } });
+      await AdminLog.insertMany(sentIds.map((id) => ({ admin: req.adminId || null, user: id, action: "send_reminder" })));
+    }
+
+    if (due.length > 0 && sentIds.length === 0) {
+      return bad(res, "Reminder emails could not be sent. Check the SMTP settings.", 502);
+    }
+    res.json({
+      success: true,
+      data: { sent: sentIds.length, skipped: users.length - due.length, failed, sentIds, sentAt: now },
     });
   } catch (err) { next(err); }
 };

@@ -102,6 +102,7 @@ const ADMIN_LOG_ACTIONS = [
   "suspend",
   "activate",
   "manual_date",
+  "send_reminder",
 ];
 const MAX_USER_PAGE_SIZE = 100;
 
@@ -868,6 +869,7 @@ exports.getDashboard = async (req, res, next) => {
                   phone: 1,
                   subscriptionType: 1,
                   subscriptionEnd: 1,
+                  lastReminderAt: 1,
                   daysLeft: {
                     $ceil: { $divide: [{ $subtract: ["$subscriptionEnd", now] }, 86400000] },
                   },

@@ -1135,7 +1135,10 @@
       "codeWrong": "Incorrect code.",
       "defaultCategoryDelete": "Default categories are required and can't be deleted.",
       "emailRequired": "Email is required.",
-      "emailTaken": "This email is already in use."
+      "emailTaken": "This email is already in use.",
+      "invalidEmail": "Enter a valid email address.",
+      "nameLength": "Name must be between 1 and 120 characters.",
+      "loginBlocked": "Too many failed attempts. Try again in {{minutes}} minute(s)."
     }
   },
   "admin": {
@@ -1206,6 +1209,17 @@
       "noExpiringUsers": "There are no subscriptions expiring soon.",
       "expiresOn": "Expires {{date}}",
       "daysRemaining": "{{days}} days left",
+      "remind": "Remind",
+      "remindUser": "Send a renewal reminder to {{name}}",
+      "remindAll": "Remind all",
+      "reminding": "Sending...",
+      "reminded": "Sent",
+      "remindedAt": "Reminder sent {{time}}",
+      "reminderResult": "{{sent}} reminder(s) sent.",
+      "reminderSkipped": "{{count}} skipped (already reminded in the last 24 hours).",
+      "reminderFailed": "{{count}} email(s) failed.",
+      "reminderNone": "Everyone here was already reminded in the last 24 hours.",
+      "reminderError": "Couldn't send the reminder. Check the email (SMTP) settings.",
       "plans": {
         "trial": "Trial",
         "3months": "3 months",
@@ -1386,7 +1400,8 @@
         "add_free_days": "Add free days",
         "suspend": "Suspend user",
         "activate": "Activate user",
-        "manual_date": "Set manual end date"
+        "manual_date": "Set manual end date",
+        "send_reminder": "Send renewal reminder"
       },
       "listTitle": "Recent activity",
       "filtersTitle": "Filter activity",

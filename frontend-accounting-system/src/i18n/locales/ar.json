@@ -1183,7 +1183,10 @@
       "codeWrong": "الكود غلط.",
       "defaultCategoryDelete": "التصنيفات الافتراضية إلزامية ولا يمكن حذفها نهائيًا.",
       "emailRequired": "البريد الإلكتروني مطلوب.",
-      "emailTaken": "البريد الإلكتروني ده مستخدم بالفعل."
+      "emailTaken": "البريد الإلكتروني ده مستخدم بالفعل.",
+      "invalidEmail": "اكتب بريد إلكتروني صحيح.",
+      "nameLength": "الاسم لازم يكون من 1 لـ 120 حرف.",
+      "loginBlocked": "محاولات فاشلة كتير. حاول تاني بعد {{minutes}} دقيقة."
     }
   },
   "admin": {
@@ -1254,6 +1257,17 @@
       "noExpiringUsers": "لا توجد اشتراكات قاربت على الانتهاء حاليًا.",
       "expiresOn": "ينتهي {{date}}",
       "daysRemaining": "متبقي {{days}} يوم",
+      "remind": "تذكير",
+      "remindUser": "ابعت تذكير بالتجديد لـ {{name}}",
+      "remindAll": "ذكّر الكل",
+      "reminding": "بيتبعت...",
+      "reminded": "اتبعت",
+      "remindedAt": "اتبعت تذكير {{time}}",
+      "reminderResult": "اتبعت {{sent}} تذكير.",
+      "reminderSkipped": "{{count}} اتبعتلهم تذكير خلال آخر 24 ساعة فاتخطّوا.",
+      "reminderFailed": "{{count}} ما وصلهمش الإيميل.",
+      "reminderNone": "كل المستخدمين دول اتبعتلهم تذكير خلال آخر 24 ساعة.",
+      "reminderError": "تعذّر إرسال التذكير. راجع إعدادات الإيميل (SMTP).",
       "plans": {
         "trial": "تجريبي",
         "3months": "3 أشهر",
@@ -1441,7 +1455,8 @@
         "add_free_days": "إضافة أيام مجانية",
         "suspend": "إيقاف مستخدم",
         "activate": "تفعيل مستخدم",
-        "manual_date": "تحديد تاريخ يدوي"
+        "manual_date": "تحديد تاريخ يدوي",
+        "send_reminder": "إرسال تذكير بالتجديد"
       },
       "listTitle": "آخر العمليات",
       "filtersTitle": "تصفية العمليات",

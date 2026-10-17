@@ -58,6 +58,13 @@ const SERVER_MESSAGES = {
   "Cannot change the type of a default category": "cannotChangeDefaultType",
   "Account name is required.": "accountNameRequired",
   "لم يتم إرسال صورة": "noImage",
+  "Password must be at least 8 characters long.": ["passwordMinLength", { min: 8 }],
+  "Password must contain an uppercase letter.": "passwordUppercase",
+  "Password must contain a number.": "passwordDigit",
+  "Too many registration attempts. Try again later.": "tooManyRequests",
+  "Name must be between 1 and 120 characters.": "nameLength",
+  "A valid email is required.": "invalidEmail",
+  "Email and password are required": "allFieldsRequired",
   "كلمة السر لازم تكون 8 حروف على الأقل": ["passwordMinLength", { min: 8 }],
   "كلمة السر لازم تحتوي على رقم": "passwordDigit",
   "كلمة السر لازم تحتوي على حرف كبير": "passwordUppercase",
@@ -76,6 +83,7 @@ const SERVER_MESSAGES = {
 
 const SERVER_PATTERNS = [
   [/^Trial limit reached: maximum (\d+) entries allowed\.$/, (m) => ["trialLimit", { max: Number(m[1]) }]],
+  [/^Too many failed attempts\. Try again in (\d+) minute\(s\)\.$/, (m) => ["loginBlocked", { minutes: Number(m[1]) }]],
   [/^Account "(.+)" is archived \(frozen\)/, (m) => ["accountArchived", { name: m[1] }]],
   [
     /^الرصيد غير كافٍ — الرصيد الحالي في "(.+)" هو ([\d.-]+) (\w+)\.$/,
